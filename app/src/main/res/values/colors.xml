@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="halftransparent_black">#80000000</color>
+    <color name="app_bg">#ffffff</color>
+    <color name="transparent_black">#b0222222</color>
+    <color name="black">#000000</color>
+    <color name="full_transparent">#00000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="keyboard_bg">#20000000</color>
+    <color name="line_gray">#aaaaaa</color>
+    <color name="convert_top_orange_bg">#f7b137</color>
+
+    <!--gray-->
+    <color name="gray1">#dcdcdc</color>
+    <color name="gray2">#dcdcd1</color>
+    <color name="red_orange">#fe6918</color>
+    <color name="red_orange_dark">#ec6115</color>
+    <color name="app_listview_item_press">#f0f0f0</color>
+    <color name="app_main">#ffb600</color>
+    <color name="app_default">#000000</color>
+    <color name="app_main_gray">#efefef</color>
+    <color name="app_main_white">#ffffff</color>
+
+
+    <!--原始色值-->
+    <color name="white">#ffffff</color>
+    <color name="gray_dcdcdc">#dcdcdc</color>
+    <color name="blue_00c0ff">#00c0ff</color>
+    <color name="blue_4287e6">#4287e6</color>
+    <color name="blue_2986df">#2986df</color>
+    <color name="black_14141f">#14141f</color>
+    <color name="black_151a22">#151a22</color>
+    <color name="black_2c2c36">#2c2c36</color>
+    <color name="black3">#333333</color>
+    <color name="view_2c2c36">#2c2c36</color>
+    <color name="yellow_e8a603">#e8a603</color>
+    <color name="yellow_ffb600">#ffb600</color>
+    <color name="white_cbcbcd">#cbcbcd</color>
+    <color name="white_bebec0">#bebec0</color>
+    <color name="gray_333333">#333333</color>
+    <color name="gray_666666">#666666</color>
+    <color name="gray_999999">#999999</color>
+    <color name="gray_cccccc">#cccccc</color>
+    <color name="gray_898989">#898989</color>
+    <color name="gray_717578">#717578</color>
+    <color name="gray_efefef">#efefef</color>
+    <color name="gray_f7f7f7">#f7f7f7</color>
+    <color name="bg_dfdfdf">#dfdfdf</color>
+    <color name="red_ff4a57">#ff4a57</color>
+    <color name="red_ff6765">#ff6765</color>
+    <color name="red_ff4a3a">#ff4a3a</color>
+    <color name="red_f32d3b">#f32d3b</color>
+    <color name="red_ff6666">#ff6666</color>
+    <color name="red_ff4d3a">#ff4d3a</color>
+    <color name="yellow_fedb43">#fedb43</color>
+    <color name="gray_66333333">#66333333</color>
+    <color name="gray_e4e4e4">#e4e4e4</color>
+    <color name="gray_aaaaaa">#aaaaaa</color>
+    <color name="gray_fafafa">#fafafa</color>
+    <color name="gray_f4f4f4">#f4f4f4</color>
+    <color name="gray_f5f5f5">#f5f5f5</color>
+    <color name="gray_f2f2f2">#f2f2f2</color>
+    <color name="gray_d6d6d6">#d6d6d6</color>
+    <color name="white_dededf">#dededf</color>
+    <color name="yellow_f9891c">#f9891c</color>
+    <color name="yellow_ffcc4d">#ffcc4d</color>
+    <color name="gray_b3b3b3">#b3b3b3</color>
+    <color name="green_16be00">#16be00</color>
+    <color name="green_26ad60">#26ad60</color>
+    <color name="green_76bd3e">#76bd3e</color>
+    <color name="gray_light">#999999</color>
+    <color name="gray">#808080</color>
+    <color name="user_btn_bg">#3d3d49</color>
+    <color name="earth_menu_item_bg">#ffe8ecef</color>
+    <color name="sell_red">#e52019</color>
+    <color name="sell_blue">#2177c7</color>
+    <color name="sell_yellow_80">#90f1cd51</color>
+    <color name="sfw_red">#d62d20</color>
+    <color name="sfw_blue">#0057e7</color>
+    <color name="sfw_green">#008744</color>
+    <color name="sfw_yellow">#ffa700</color>
+    <color name="blue_4f87ba">#4f87ba</color>
+    <color name="blue_2e70b9">#2e70b9</color>
+
+
+
+    <!--new add-->
+    <color name="keyboard_line">#30ffffff</color>
+
+    <color name="accountwheelview_textcolor_out">#50FFFFFF</color>
+    <color name="accountwheelview_textcolor_center">#FFFFFF</color>
+    <color name="accountwheelview_textcolor_divider">#70FFFFFF</color>
+
+    <color name="list_selected">#e5f1fd</color>
+
+    <color name="background">#f3f4f9</color>
+    <color name="divider">#cccccc</color>
+    <color name="title_or_content">#666666</color>
+    <color name="content">#999999</color>
+    <color name="auxiliary_txt">#cccccc</color>
+    <color name="delete_color">#ef6060</color>
+    <color name="button_icon_color">#2c8de8</color>
+    <color name="hint_color">#abc6f5</color>
+
+    <!--Receive Color-->
+    <color name="ReceiveView_StartColor">#2C8DE8</color>
+    <color name="ReceiveView_CenterColor">#665AF0</color>
+    <color name="ReceiveView_EndColor">#8232f0</color>
+    <color name="ReceiveView_Outerwhite">#F3F4F9</color>
+    <color name="ReceiveView_lineCC">#DEDEDE</color>
+
+    <!--Me.Profile-->
+    <color name="Me_Item_Color">#333333</color>
+    <color name="LogoName_Color">#666666</color>
+    <color name="Update_Color">#999999</color>
+    <color name="Password_Redeem">#2c8de8</color>
+
+    <color name="txt_send_balance">#abcbf4</color>
+
+
+    <color name="blue_light">#87CEFA</color>
+
+    <color name="transaction_send">#2c8de8</color>
+    <color name="transaction_receive">#8232f0</color>
+
+    <color name="blue_dark">#2685DF</color>
+    <color name="white_97cd">#97cdff</color>
+</resources>
