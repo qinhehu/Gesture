@@ -27,6 +27,7 @@ public class GestureEngine {
         }
         mRecyclerView = recyclerView;
         mRecyclerView.addOnItemTouchListener(new BulletItemTouchListener(mRecyclerView.getContext()));
+        mRecyclerView.addItemDecoration(new ItemDecoration());
     }
 
 
