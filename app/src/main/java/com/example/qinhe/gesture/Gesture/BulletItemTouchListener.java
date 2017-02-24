@@ -8,11 +8,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -25,6 +28,9 @@ import android.widget.Scroller;
 import com.example.qinhe.gesture.DisplayUtils;
 import com.example.qinhe.gesture.IOnListListener;
 import com.example.qinhe.gesture.R;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by QinHe on 2017/2/21.
@@ -57,7 +63,11 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     private boolean isNeedLongPress = true;
     private boolean isNeedSideslip = true;
 
+    private ArrayList<RecyclerView.ViewHolder> mVisibleViewArray;
+
     private View mView;
+    private View mLastTargetView;
+
     @Nullable
     private IOnListListener mMobiListListener;
 
@@ -79,7 +89,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
     @Override
     public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent ev) {
-
 
         if (isScrolling) {
             return false;
@@ -106,7 +115,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
         switch (ev.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
-                Log.d("LONG_PRESS", "ACTION_DOWN: " + (mView == null));
+
                 mDownFocusX = focusX;
                 mDownFocusY = focusY;
                 isOnceEventFlow = true;
@@ -124,6 +133,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             case MotionEvent.ACTION_MOVE:
 
                 if (isLongPressDrag) {
+//                    rv.setClipChildren(false);
                     return true;
                 }
 
@@ -172,12 +182,43 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             case MotionEvent.ACTION_MOVE:
 
                 if (isLongPressDrag) {
-                    mView.setTranslationY(y - mDownFocusY);
-//                    View targetView = rv.findChildViewUnder(x, y);
-//                    if (rv.getChildLayoutPosition(targetView) != rv.getChildLayoutPosition(mView)) {
-//                        rv.getAdapter().notifyItemMoved(rv.getChildLayoutPosition(mView)
-//                                , rv.getChildLayoutPosition(targetView));
-//                    }
+                    rv.getLayoutManager().endAnimation(mView);
+                    //使用scrollTo的话，可以通过findChildViewUnder找到targetview，但scroll的绘制无法超过自身view大小。
+                    //用TranslationY的话，当motion移动至view上方时，无法通过findChildViewUnder找到targetview
+//                    mView.scrollTo(0, (int) mDownFocusY - y);
+                    float displacement = y - mDownFocusY;
+                    mView.setTranslationY(displacement);
+                    int dragPosition = rv.getChildLayoutPosition(mView);
+
+                    if (mLastTargetView != null) {
+                        mLastTargetView.setBackground(null);
+                        mLastTargetView.setPadding(0, 0, 0, 0);
+                    }
+
+                    int targetPosition = chooseDropTarget(rv, dragPosition, y);
+
+                    mLastTargetView = rv.getChildAt(targetPosition);
+                    if (mLastTargetView != null) {
+                        mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
+                        if (dragPosition != targetPosition && targetPosition != -1 && Math.abs(dragPosition - targetPosition) == 2) {
+                            if (dragPosition < targetPosition) {
+                                rv.getAdapter().notifyItemMoved(dragPosition
+                                        , targetPosition - 1);
+                                mDownFocusY += mView.getHeight();
+                            } else {
+
+                                rv.getAdapter().notifyItemMoved(dragPosition
+                                        , targetPosition + 1);
+                                mDownFocusY -= mView.getHeight();
+                            }
+
+//                            final RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+//                            if (layoutManager instanceof ItemTouchHelper.ViewDropHandler) {
+//                                ((ItemTouchHelper.ViewDropHandler) layoutManager).prepareForDrop(mView,
+//                                        mLastTargetView, x, y);
+//                            }
+                        }
+                    }
 
                 }
 
@@ -257,21 +298,110 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
     private void resetLongPressView() {
         isLongPressDrag = false;
+        mView.scrollTo(0, 0);
         mView.setTranslationY(0);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mView.setTranslationZ(0);
         }
         mView.setBackground(null);
         mView.setPadding(0, 0, 0, 0);
+        if (mLastTargetView != null) {
+            mLastTargetView.setBackground(null);
+            mLastTargetView.setPadding(0, 0, 0, 0);
+            mLastTargetView = null;
+        }
         mView.setScaleX(1f);
         mView.setScaleY(1f);
         mView = null;
+        if (mVisibleViewArray != null) {
+            mVisibleViewArray.clear();
+        }
     }
 
     private void resetSlidslipView() {
         mScroller.startScroll(mCurrentX, 0, -mCurrentX, 0);
         mCurrentX = 0;
         mHandler.sendEmptyMessage(SIDESLIP);
+    }
+
+
+    private int chooseDropTarget(RecyclerView rv, int dragPosition, int curY) {
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) rv.getLayoutManager());
+        int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+        int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
+        if (mVisibleViewArray == null) {
+            mVisibleViewArray = new ArrayList<>();
+        }
+        mVisibleViewArray.clear();
+        //如果集合已有数据，则采用进补位的方式。如无则增加
+        if (mVisibleViewArray.size() > 0) {
+            RecyclerView.ViewHolder viewHolder = mVisibleViewArray.get(0);
+
+
+            //假设向上滚动，原先第一个view退居第二，最后一个view被移除
+            if (viewHolder.getAdapterPosition() > firstVisiblePosition) {
+                mVisibleViewArray.add(0, rv.findViewHolderForLayoutPosition(firstVisiblePosition));
+                mVisibleViewArray.remove(mVisibleViewArray.size() - 1);
+            }
+            //假设向下滚动，原先第二个view进军第一，第一个view被移除，同时，新增新的view至堆尾
+            if (viewHolder.getAdapterPosition() < firstVisiblePosition) {
+                mVisibleViewArray.remove(0);
+                mVisibleViewArray.add(mVisibleViewArray.size(), rv.findViewHolderForLayoutPosition(firstVisiblePosition));
+            }
+
+        } else {
+            int index = 0;
+            for (int i = firstVisiblePosition; i < lastVisiblePosition; ++i) {
+                mVisibleViewArray.add(index, rv.findViewHolderForLayoutPosition(i));
+                index++;
+            }
+        }
+
+
+        //处理好集合，开始根据坐标选择viewHolder
+        int visibleViewCount = mVisibleViewArray.size();
+        float referenceUp = mView.getY() - mView.getTranslationY();
+        if ((referenceUp > curY)) {
+            if (referenceUp - curY > mView.getHeight()) {
+                return dragPosition - 2;
+            }
+            if (referenceUp - curY < mView.getHeight() && referenceUp - curY > 0) {
+                return dragPosition - 1;
+            }
+        }
+        float referenceDown = mView.getY() - mView.getTranslationY() + mView.getHeight();
+        if ((referenceDown < curY)) {
+            if (curY - referenceDown > mView.getHeight()) {
+                return dragPosition + 2;
+            }
+            if (curY - referenceDown < mView.getHeight() && curY - referenceDown > 0) {
+                return dragPosition + 1;
+            }
+        }
+
+//        int half = visibleViewCount / 2;
+//        if (mVisibleViewArray.get(half).itemView.getY() > curY) {
+//            for (int i = 0; i < half - 1; ++i) {
+//                if (dragPosition == i) {
+//                    continue;
+//                }
+//                View item = mVisibleViewArray.get(i).itemView;
+//                if (item.getTop() + item.getHeight() > curY) {
+//                    return mVisibleViewArray.get(i).getLayoutPosition();
+//                }
+//            }
+//        } else {
+//            for (int i = half - 1; i < visibleViewCount - 1; ++i) {
+//                if (dragPosition == i) {
+//                    continue;
+//                }
+//                View item = mVisibleViewArray.get(i).itemView;
+//                if (item.getTop() + item.getHeight() > curY) {
+//                    return mVisibleViewArray.get(i).getLayoutPosition();
+//                }
+//            }
+//        }
+        return -1;
     }
 
     private class GestureHandler extends Handler {
@@ -306,6 +436,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         mView.setTranslationZ(1000);
                     }
 
+                    mView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     mView.setBackground(mView.getContext().getResources().getDrawable(R.drawable.shape));
                     ObjectAnimator animator = ObjectAnimator.ofFloat(mView, "mview", 1f, 0.8f)
                             .setDuration(300);
