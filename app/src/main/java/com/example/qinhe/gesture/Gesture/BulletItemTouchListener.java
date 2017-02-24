@@ -182,6 +182,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             case MotionEvent.ACTION_MOVE:
 
                 if (isLongPressDrag) {
+                    rv.getLayoutManager().endAnimation(mView);
                     //使用scrollTo的话，可以通过findChildViewUnder找到targetview，但scroll的绘制无法超过自身view大小。
                     //用TranslationY的话，当motion移动至view上方时，无法通过findChildViewUnder找到targetview
 //                    mView.scrollTo(0, (int) mDownFocusY - y);
@@ -205,6 +206,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                                         , targetPosition - 1);
                                 mDownFocusY += mView.getHeight();
                             } else {
+
                                 rv.getAdapter().notifyItemMoved(dragPosition
                                         , targetPosition + 1);
                                 mDownFocusY -= mView.getHeight();
