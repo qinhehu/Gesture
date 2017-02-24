@@ -184,9 +184,9 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                 if (isLongPressDrag) {
                     //使用scrollTo的话，可以通过findChildViewUnder找到targetview，但scroll的绘制无法超过自身view大小。
                     //用TranslationY的话，当motion移动至view上方时，无法通过findChildViewUnder找到targetview
-                    mView.scrollTo(0, (int) mDownFocusY - y);
-//                    float displacement = y - mDownFocusY;
-//                    mView.setTranslationY(displacement);
+//                    mView.scrollTo(0, (int) mDownFocusY - y);
+                    float displacement = y - mDownFocusY;
+                    mView.setTranslationY(displacement);
                     int dragPosition = rv.getChildLayoutPosition(mView);
 
                     if (mLastTargetView != null) {
@@ -194,39 +194,27 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         mLastTargetView.setPadding(0, 0, 0, 0);
                     }
 
-//                    int targetPosition = chooseDropTarget(rv, dragPosition, y);
-//                    mLastTargetView = rv.getChildAt(targetPosition);
-//                    if (mLastTargetView != null) {
-//                        mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
-//                        Log.d("LONGPRESS", "onTouchEvent: " + dragPosition + "====" + targetPosition);
-//                        if (dragPosition != targetPosition && targetPosition != -1 && Math.abs(dragPosition - targetPosition) == 2) {
-//                            if (dragPosition < targetPosition) {
-//                                rv.getAdapter().notifyItemMoved(dragPosition
-//                                        , targetPosition - 1);
-//                            } else {
-//                                rv.getAdapter().notifyItemMoved(dragPosition
-//                                        , targetPosition + 1);
-//                            }
-//                        }
-//                    }
+                    int targetPosition = chooseDropTarget(rv, dragPosition, y);
 
-
-                    mLastTargetView = rv.findChildViewUnder(x, y);
+                    mLastTargetView = rv.getChildAt(targetPosition);
                     if (mLastTargetView != null) {
-                        Log.d("LONGPRESS", "onTouchEvent: " + mLastTargetView.getTop());
-                        int targetPosition = rv.getChildLayoutPosition(mLastTargetView);
                         mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
-
                         if (dragPosition != targetPosition && targetPosition != -1 && Math.abs(dragPosition - targetPosition) == 2) {
-
                             if (dragPosition < targetPosition) {
                                 rv.getAdapter().notifyItemMoved(dragPosition
                                         , targetPosition - 1);
+                                mDownFocusY += mView.getHeight();
                             } else {
                                 rv.getAdapter().notifyItemMoved(dragPosition
                                         , targetPosition + 1);
+                                mDownFocusY -= mView.getHeight();
                             }
 
+//                            final RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
+//                            if (layoutManager instanceof ItemTouchHelper.ViewDropHandler) {
+//                                ((ItemTouchHelper.ViewDropHandler) layoutManager).prepareForDrop(mView,
+//                                        mLastTargetView, x, y);
+//                            }
                         }
                     }
 
@@ -349,12 +337,12 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
 
             //假设向上滚动，原先第一个view退居第二，最后一个view被移除
-            if (viewHolder.getLayoutPosition() > firstVisiblePosition) {
+            if (viewHolder.getAdapterPosition() > firstVisiblePosition) {
                 mVisibleViewArray.add(0, rv.findViewHolderForLayoutPosition(firstVisiblePosition));
                 mVisibleViewArray.remove(mVisibleViewArray.size() - 1);
             }
             //假设向下滚动，原先第二个view进军第一，第一个view被移除，同时，新增新的view至堆尾
-            if (viewHolder.getLayoutPosition() < firstVisiblePosition) {
+            if (viewHolder.getAdapterPosition() < firstVisiblePosition) {
                 mVisibleViewArray.remove(0);
                 mVisibleViewArray.add(mVisibleViewArray.size(), rv.findViewHolderForLayoutPosition(firstVisiblePosition));
             }
@@ -367,31 +355,50 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             }
         }
 
+
         //处理好集合，开始根据坐标选择viewHolder
         int visibleViewCount = mVisibleViewArray.size();
-        int half = visibleViewCount / 2;
-        if (mVisibleViewArray.get(half).itemView.getY() > curY) {
-            for (int i = 0; i < half - 1; ++i) {
-                if (dragPosition == i) {
-                    continue;
-                }
-                View item = mVisibleViewArray.get(i).itemView;
-                Log.d("LONGPRESS", "chooseDropTarget: " + (item.getTop() + item.getHeight()) + "=======" + curY + "====" + dragPosition);
-                if (item.getTop() + item.getHeight() > curY) {
-                    return mVisibleViewArray.get(i).getLayoutPosition();
-                }
+        float referenceUp = mView.getY() - mView.getTranslationY();
+        if ((referenceUp > curY)) {
+            if (referenceUp - curY > mView.getHeight()) {
+                return dragPosition - 2;
             }
-        } else {
-            for (int i = half - 1; i < visibleViewCount - 1; ++i) {
-                if (dragPosition == i) {
-                    continue;
-                }
-                View item = mVisibleViewArray.get(i).itemView;
-                if (item.getTop() + item.getHeight() > curY) {
-                    return mVisibleViewArray.get(i).getLayoutPosition();
-                }
+            if (referenceUp - curY < mView.getHeight() && referenceUp - curY > 0) {
+                return dragPosition - 1;
             }
         }
+        float referenceDown = mView.getY() - mView.getTranslationY() + mView.getHeight();
+        if ((referenceDown < curY)) {
+            if (curY - referenceDown > mView.getHeight()) {
+                return dragPosition + 2;
+            }
+            if (curY - referenceDown < mView.getHeight() && curY - referenceDown > 0) {
+                return dragPosition + 1;
+            }
+        }
+
+//        int half = visibleViewCount / 2;
+//        if (mVisibleViewArray.get(half).itemView.getY() > curY) {
+//            for (int i = 0; i < half - 1; ++i) {
+//                if (dragPosition == i) {
+//                    continue;
+//                }
+//                View item = mVisibleViewArray.get(i).itemView;
+//                if (item.getTop() + item.getHeight() > curY) {
+//                    return mVisibleViewArray.get(i).getLayoutPosition();
+//                }
+//            }
+//        } else {
+//            for (int i = half - 1; i < visibleViewCount - 1; ++i) {
+//                if (dragPosition == i) {
+//                    continue;
+//                }
+//                View item = mVisibleViewArray.get(i).itemView;
+//                if (item.getTop() + item.getHeight() > curY) {
+//                    return mVisibleViewArray.get(i).getLayoutPosition();
+//                }
+//            }
+//        }
         return -1;
     }
 
