@@ -63,8 +63,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     private boolean isNeedLongPress = true;
     private boolean isNeedSideslip = true;
 
-    private ArrayList<RecyclerView.ViewHolder> mVisibleViewArray;
-
     private View mView;
     private View mLastTargetView;
 
@@ -190,36 +188,49 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                     mView.setTranslationY(displacement);
                     int dragPosition = rv.getChildLayoutPosition(mView);
 
-                    if (mLastTargetView != null) {
+                    if (mLastTargetView != null && mLastTargetView != mView) {
                         mLastTargetView.setBackground(null);
                         mLastTargetView.setPadding(0, 0, 0, 0);
                     }
 
                     int targetPosition = chooseDropTarget(rv, dragPosition, y);
 
-                    mLastTargetView = rv.getChildAt(targetPosition);
-                    if (mLastTargetView != null) {
+                    mLastTargetView = rv.getLayoutManager().findViewByPosition(targetPosition);
+                    if (mLastTargetView != null && dragPosition != targetPosition) {
                         mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
-                        if (dragPosition != targetPosition && targetPosition != -1 && Math.abs(dragPosition - targetPosition) == 2) {
-                            if (dragPosition < targetPosition) {
-                                rv.getAdapter().notifyItemMoved(dragPosition
-                                        , targetPosition - 1);
-                                mDownFocusY += mView.getHeight();
+
+                        if (dragPosition != targetPosition && targetPosition != -1) {
+                            if (Math.abs(dragPosition - targetPosition) == 2) {
+                                if (dragPosition < targetPosition) {
+                                    rv.getAdapter().notifyItemMoved(dragPosition
+                                            , targetPosition - 1);
+                                    mDownFocusY += mView.getHeight();
+                                } else {
+                                    rv.getAdapter().notifyItemMoved(dragPosition
+                                            , targetPosition + 1);
+                                    mDownFocusY -= mView.getHeight();
+                                }
                             } else {
+                                if (targetPosition == 0 && y < 0) {
+//                                    if (dragPosition < targetPosition) {
+//                                        rv.getAdapter().notifyItemMoved(dragPosition, 0);
+//                                        mDownFocusY += mView.getHeight();
+//                                    } else {
+                                    rv.stopNestedScroll();
+                                        rv.getAdapter().notifyItemMoved(dragPosition, 0);
+                                        mDownFocusY -= mView.getHeight();
+//                                    }
 
-                                rv.getAdapter().notifyItemMoved(dragPosition
-                                        , targetPosition + 1);
-                                mDownFocusY -= mView.getHeight();
+                                }
                             }
-
-//                            final RecyclerView.LayoutManager layoutManager = rv.getLayoutManager();
-//                            if (layoutManager instanceof ItemTouchHelper.ViewDropHandler) {
-//                                ((ItemTouchHelper.ViewDropHandler) layoutManager).prepareForDrop(mView,
-//                                        mLastTargetView, x, y);
-//                            }
+                        }
+                    } else {
+                        if (dragPosition == rv.getAdapter().getItemCount() - 2
+                                && targetPosition == rv.getAdapter().getItemCount()) {
+                            rv.getAdapter().notifyItemMoved(dragPosition, rv.getAdapter().getItemCount() - 1);
+                            mDownFocusY += mView.getHeight();
                         }
                     }
-
                 }
 
                 if (!isScrolling && isOnceEventFlow && !isLongPressDrag) {
@@ -313,9 +324,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
         mView.setScaleX(1f);
         mView.setScaleY(1f);
         mView = null;
-        if (mVisibleViewArray != null) {
-            mVisibleViewArray.clear();
-        }
     }
 
     private void resetSlidslipView() {
@@ -324,44 +332,18 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
         mHandler.sendEmptyMessage(SIDESLIP);
     }
 
-
     private int chooseDropTarget(RecyclerView rv, int dragPosition, int curY) {
         LinearLayoutManager layoutManager = ((LinearLayoutManager) rv.getLayoutManager());
         int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
         int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
-        if (mVisibleViewArray == null) {
-            mVisibleViewArray = new ArrayList<>();
-        }
-        mVisibleViewArray.clear();
-        //如果集合已有数据，则采用进补位的方式。如无则增加
-        if (mVisibleViewArray.size() > 0) {
-            RecyclerView.ViewHolder viewHolder = mVisibleViewArray.get(0);
 
-
-            //假设向上滚动，原先第一个view退居第二，最后一个view被移除
-            if (viewHolder.getAdapterPosition() > firstVisiblePosition) {
-                mVisibleViewArray.add(0, rv.findViewHolderForLayoutPosition(firstVisiblePosition));
-                mVisibleViewArray.remove(mVisibleViewArray.size() - 1);
-            }
-            //假设向下滚动，原先第二个view进军第一，第一个view被移除，同时，新增新的view至堆尾
-            if (viewHolder.getAdapterPosition() < firstVisiblePosition) {
-                mVisibleViewArray.remove(0);
-                mVisibleViewArray.add(mVisibleViewArray.size(), rv.findViewHolderForLayoutPosition(firstVisiblePosition));
-            }
-
-        } else {
-            int index = 0;
-            for (int i = firstVisiblePosition; i < lastVisiblePosition; ++i) {
-                mVisibleViewArray.add(index, rv.findViewHolderForLayoutPosition(i));
-                index++;
-            }
+//        Log.d("LONGPRESS-DRAG", "chooseDropTarget: " + mView.getY() + "====" + mView.getTranslationY() + "========" + mView.getHeight());
+        if (mView.getY() < 0) {
+            return 0;
         }
 
-
-        //处理好集合，开始根据坐标选择viewHolder
-        int visibleViewCount = mVisibleViewArray.size();
         float referenceUp = mView.getY() - mView.getTranslationY();
-        if ((referenceUp > curY)) {
+        if ((referenceUp > curY) && mView.getTranslationY() < 0) {
             if (referenceUp - curY > mView.getHeight()) {
                 return dragPosition - 2;
             }
@@ -370,7 +352,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             }
         }
         float referenceDown = mView.getY() - mView.getTranslationY() + mView.getHeight();
-        if ((referenceDown < curY)) {
+        if ((referenceDown < curY) && mView.getTranslationY() > 0) {
             if (curY - referenceDown > mView.getHeight()) {
                 return dragPosition + 2;
             }
@@ -379,28 +361,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             }
         }
 
-//        int half = visibleViewCount / 2;
-//        if (mVisibleViewArray.get(half).itemView.getY() > curY) {
-//            for (int i = 0; i < half - 1; ++i) {
-//                if (dragPosition == i) {
-//                    continue;
-//                }
-//                View item = mVisibleViewArray.get(i).itemView;
-//                if (item.getTop() + item.getHeight() > curY) {
-//                    return mVisibleViewArray.get(i).getLayoutPosition();
-//                }
-//            }
-//        } else {
-//            for (int i = half - 1; i < visibleViewCount - 1; ++i) {
-//                if (dragPosition == i) {
-//                    continue;
-//                }
-//                View item = mVisibleViewArray.get(i).itemView;
-//                if (item.getTop() + item.getHeight() > curY) {
-//                    return mVisibleViewArray.get(i).getLayoutPosition();
-//                }
-//            }
-//        }
         return -1;
     }
 
