@@ -41,7 +41,6 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
         private final ImageView imageView;
         private final View unReadView;
         private final TextView content;
-//        private final CstSideslip cstSideslip;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -49,22 +48,6 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder> {
             imageView = (ImageView) itemView.findViewById(R.id.image);
             unReadView = itemView.findViewById(R.id.view_unread);
             content = (TextView) itemView.findViewById(R.id.txt_content);
-//            cstSideslip = (CstSideslip) itemView.findViewById(R.id.sideslip);
-//            cstSideslip.setMobiListListener(new IOnListListener() {
-//                @Override
-//                public void onRead() {
-//                    if(unReadView.getVisibility() == View.VISIBLE){
-//                        unReadView.setVisibility(View.GONE);
-//                    }else{
-//                        unReadView.setVisibility(View.VISIBLE);
-//                    }
-//                }
-//
-//                @Override
-//                public void onDelete() {
-//
-//                }
-//            });
         }
     }
 }

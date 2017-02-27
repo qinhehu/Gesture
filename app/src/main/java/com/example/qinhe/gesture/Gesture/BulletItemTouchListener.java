@@ -21,7 +21,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Scroller;
 
 import com.example.qinhe.gesture.DisplayUtils;
-import com.example.qinhe.gesture.IOnListListener;
 import com.example.qinhe.gesture.R;
 
 /**
@@ -62,8 +61,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     private View mLastTargetView;
     private RecyclerView mRecyclerView;
 
-    @Nullable
-    private IOnListListener mMobiListListener;
 
     @NonNull
     private Scroller mScroller;
@@ -95,7 +92,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
         final boolean pointerUp =
                 (action & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_POINTER_UP;
         final int skipIndex = pointerUp ? ev.getActionIndex() : -1;
-        // Determine focal point
         float sumX = 0, sumY = 0;
         final int count = ev.getPointerCount();
         for (int i = 0; i < count; i++) {
@@ -128,7 +124,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
                 if (longPressDraging) {
                     mRecyclerView = rv;
-//                    rv.setClipChildren(false);
                     return true;
                 }
 
@@ -255,7 +250,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
 
-
                 if (mView.getScrollX() > 0) {
                     if (mCurrentX >= displayUtils.dip2px(VIEW_LAYOUT_WIDTH) / 2) {
                         mScroller.startScroll(mView.getScrollX(), 0
@@ -327,9 +321,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     private int chooseDropTarget(RecyclerView rv, int dragPosition, int curY) {
         LinearLayoutManager layoutManager = ((LinearLayoutManager) rv.getLayoutManager());
         int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
-        int lastVisiblePosition = layoutManager.findLastVisibleItemPosition();
 
-//        Log.d("LONGPRESS-DRAG", "chooseDropTarget: " + mView.getY() + "====" + mView.getTranslationY() + "========" + mView.getHeight());
         if (mView.getY() < 0 && firstVisiblePosition == 0) {
             return firstVisiblePosition;
         }
@@ -372,9 +364,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                             mHandler.sendEmptyMessage(SIDESLIP);
                             mCurrentX = 0;
                             isOnceEventFlow = false;
-                            if (mMobiListListener != null) {
-                                mMobiListListener.onRead();
-                            }
+                            // execute event
                         } else {
                             isScrolling = false;
                             if (mCurrentX == 0) {
