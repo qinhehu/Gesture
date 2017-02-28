@@ -3,13 +3,11 @@ package com.example.qinhe.gesture.Gesture;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.support.v4.util.ArrayMap;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -27,10 +25,10 @@ import com.example.qinhe.gesture.R;
  * Created by QinHe on 2017/2/21.
  */
 
-public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener {
+public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
 
     private static final int SIDESLIP = 0;
-    private static final int LONG_PRESS_DRAG = 1;
+    private static final int LONG_PRESS_SCROLL = 1;
     private static final int LONG_PRESS = 2;
 
     private static final int LONGPRESS_TIMEOUT = ViewConfiguration.getLongPressTimeout();
@@ -54,8 +52,12 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     private boolean isOnceEventFlow;
     private boolean longPressDraging;
 
-    private boolean isNeedLongPress = true;
-    private boolean isNeedSideslip = true;
+    private boolean leftSideslip = false;
+    private boolean leftAutoClose = false;
+    private boolean rightSideslip = false;
+    private boolean longPress = false;
+    private boolean drag = false;
+    private boolean swap = false;
 
     private View mView;
     private View mLastTargetView;
@@ -67,7 +69,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
     @NonNull
     private DisplayUtils displayUtils;
 
-    public BulletItemTouchListener(Context context) {
+    public ItemTouchListener(Context context) {
         ViewConfiguration configuration = ViewConfiguration.get(context);
         int touchSlop = configuration.getScaledTouchSlop();
         mTouchSlopSquare = touchSlop * touchSlop;
@@ -114,11 +116,13 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                     return false;
                 }
                 mView = rv.findChildViewUnder(x, y);
-                if (isNeedLongPress) {
+
+                if (longPress) {
                     mHandler.removeMessages(LONG_PRESS);
                     mHandler.sendEmptyMessageAtTime(LONG_PRESS, ev.getDownTime()
                             + TAP_TIMEOUT + LONGPRESS_TIMEOUT);
                 }
+
                 break;
             case MotionEvent.ACTION_MOVE:
 
@@ -138,7 +142,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         return false;
                     }
 
-                    if (isNeedSideslip) {
+                    if (leftSideslip || rightSideslip) {
                         if (isSideslipMove(x, y)) {
                             return true;
                         }
@@ -181,7 +185,6 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         mMarkFocusY = mDownFocusY - mView.getY();
                     }
                     float displacement = y - mView.getY() - mMarkFocusY;
-                    Log.d("LONGPRESS-DRAG", "onTouchEvent: " + mView.getY() + "====" + mView.getMeasuredHeight());
                     mView.setTranslationY(displacement);
                     int dragPosition = rv.getChildLayoutPosition(mView);
 
@@ -199,30 +202,35 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
 
                     int targetPosition = chooseDropTarget(rv, dragPosition, y);
 
-                    mLastTargetView = rv.getLayoutManager().findViewByPosition(targetPosition);
-                    if (mLastTargetView != null && dragPosition != targetPosition) {
-                        mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
+                    if (swap) {
+                        mLastTargetView = rv.getLayoutManager().findViewByPosition(targetPosition);
+                        if (mLastTargetView != null && dragPosition != targetPosition) {
+                            mLastTargetView.setBackground(mLastTargetView.getContext().getResources().getDrawable(R.drawable.red_shape));
 
-                        if (dragPosition != targetPosition && targetPosition != -1) {
-                            if (Math.abs(dragPosition - targetPosition) == 2) {
-                                if (dragPosition < targetPosition) {
-                                    rv.getAdapter().notifyItemMoved(dragPosition
-                                            , targetPosition - 1);
+                            if (dragPosition != targetPosition && targetPosition != -1) {
+                                if (Math.abs(dragPosition - targetPosition) == 2) {
+                                    if (dragPosition < targetPosition) {
+                                        rv.getAdapter().notifyItemMoved(dragPosition
+                                                , targetPosition - 1);
+                                    } else {
+                                        rv.getAdapter().notifyItemMoved(dragPosition
+                                                , targetPosition + 1);
+                                    }
+                                    if (dragPosition == 0) {
+                                        rv.scrollToPosition(0);
+                                    }
                                 } else {
-                                    rv.getAdapter().notifyItemMoved(dragPosition
-                                            , targetPosition + 1);
-                                }
-                            } else {
-                                if (targetPosition == 0 && y < 0) {
-                                    rv.getAdapter().notifyItemMoved(dragPosition, 0);
-                                    rv.scrollToPosition(0);
+                                    if (targetPosition == 0 && y < 0) {
+                                        rv.getAdapter().notifyItemMoved(dragPosition, 0);
+                                        rv.scrollToPosition(0);
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        if (dragPosition == rv.getAdapter().getItemCount() - 2
-                                && targetPosition == rv.getAdapter().getItemCount()) {
-                            rv.getAdapter().notifyItemMoved(dragPosition, rv.getAdapter().getItemCount() - 1);
+                        } else {
+                            if (dragPosition == rv.getAdapter().getItemCount() - 2
+                                    && targetPosition == rv.getAdapter().getItemCount()) {
+                                rv.getAdapter().notifyItemMoved(dragPosition, rv.getAdapter().getItemCount() - 1);
+                            }
                         }
                     }
                 }
@@ -230,19 +238,28 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                 if (!isScrolling && isOnceEventFlow && !longPressDraging) {
                     //手指向左移动，view左移动，触发右边事件
                     if (mDownFocusX - x > 0 && Math.abs(x - mDownFocusX) <= displayUtils.dip2px(VIEW_LAYOUT_WIDTH)
-                            && mView.getScrollX() != displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
+                            && mView.getScrollX() != displayUtils.dip2px(VIEW_LAYOUT_WIDTH) && rightSideslip) {
                         mView.scrollTo((int) (mDownFocusX - x), 0);
                         mCurrentX = (int) (mDownFocusX - x);
                     }
                     //手指向右移动，view右移动，触发左边事件
                     if (mDownFocusX - x < -displayUtils.dip2px(VIEW_LAYOUT_WIDTH) / 2 &&
-                            mCurrentX == 0 || mCurrentX == displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
+                            mCurrentX == 0 || mCurrentX == displayUtils.dip2px(VIEW_LAYOUT_WIDTH) && leftSideslip && leftAutoClose) {
                         if (mCurrentX == displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
 //                            ViewCompat.setTranslationZ(rightBtn, -1f);
                         }
                         mScroller.startScroll(mCurrentX, 0, -displayUtils.dip2px(VIEW_LAYOUT_WIDTH), 0);
                         mCurrentX += -displayUtils.dip2px(VIEW_LAYOUT_WIDTH);
                         mHandler.sendEmptyMessage(SIDESLIP);
+                    }
+                    if (x - mDownFocusX > 0 &&
+                            Math.abs(x - mDownFocusX) <= displayUtils.dip2px(VIEW_LAYOUT_WIDTH)
+                            && mView.getScrollX() != 0 - displayUtils.dip2px(VIEW_LAYOUT_WIDTH) && leftSideslip && !leftAutoClose) {
+                        if (mCurrentX == displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
+//                            ViewCompat.setTranslationZ(rightBtn, -1f);
+                        }
+                        mView.scrollTo((int) (mDownFocusX - x), 0);
+                        mCurrentX = (int) (mDownFocusX - x);
                     }
                 }
 
@@ -297,9 +314,7 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
         longPressDraging = false;
         mView.scrollTo(0, 0);
         mView.setTranslationY(0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mView.setTranslationZ(0);
-        }
+        ViewCompat.setTranslationZ(mView, 0);
         mView.setBackground(null);
         mView.setPadding(0, 0, 0, 0);
         if (mLastTargetView != null) {
@@ -359,12 +374,19 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         mView.invalidate();
                         mHandler.sendEmptyMessage(SIDESLIP);
                     } else {
-                        if (mCurrentX == -displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
-                            mScroller.startScroll(mCurrentX, 0, displayUtils.dip2px(VIEW_LAYOUT_WIDTH), 0);
-                            mHandler.sendEmptyMessage(SIDESLIP);
-                            mCurrentX = 0;
-                            isOnceEventFlow = false;
-                            // execute event
+                        if (leftAutoClose) {
+                            if (mCurrentX == -displayUtils.dip2px(VIEW_LAYOUT_WIDTH)) {
+                                mScroller.startScroll(mCurrentX, 0, displayUtils.dip2px(VIEW_LAYOUT_WIDTH), 0);
+                                mHandler.sendEmptyMessage(SIDESLIP);
+                                mCurrentX = 0;
+                                isOnceEventFlow = false;
+                                // execute event
+                            } else {
+                                isScrolling = false;
+                                if (mCurrentX == 0) {
+                                    mView = null;
+                                }
+                            }
                         } else {
                             isScrolling = false;
                             if (mCurrentX == 0) {
@@ -373,34 +395,70 @@ public class BulletItemTouchListener implements RecyclerView.OnItemTouchListener
                         }
                     }
                     break;
-                case LONG_PRESS_DRAG:
+                case LONG_PRESS_SCROLL:
                     if (mScroller.computeScrollOffset()) {
-                        Log.d("LONGPRESS-DRAG", "handleMessage: " + mRecyclerView.getScrollY());
                         mRecyclerView.scrollBy(mScroller.getCurrX(), mScroller.getCurrY());
                         mRecyclerView.invalidate();
-                        mHandler.sendEmptyMessage(LONG_PRESS_DRAG);
+                        mHandler.sendEmptyMessage(LONG_PRESS_SCROLL);
                     }
                     break;
                 case LONG_PRESS:
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        mView.setTranslationZ(1000);
+                    mView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    if (drag) {
+                        ViewCompat.setTranslationZ(mView, 1000);
+                        mView.setBackground(mView.getContext().getResources().getDrawable(R.drawable.shape));
+                        ObjectAnimator animator = ObjectAnimator.ofFloat(mView, "mview", 1f, 0.8f)
+                                .setDuration(300);
+                        animator.start();
+                        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                            @Override
+                            public void onAnimationUpdate(ValueAnimator animation) {
+                                float value = (Float) animation.getAnimatedValue();
+                                mView.setScaleX(value);
+                                mView.setScaleY(value);
+                            }
+                        });
+                        longPressDraging = true;
+                    } else {
+                        mView = null;
+                        Log.d("event", "handleMessage: 响应长按事件");
                     }
 
-                    mView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-                    mView.setBackground(mView.getContext().getResources().getDrawable(R.drawable.shape));
-                    ObjectAnimator animator = ObjectAnimator.ofFloat(mView, "mview", 1f, 0.8f)
-                            .setDuration(300);
-                    animator.start();
-                    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            float value = (Float) animation.getAnimatedValue();
-                            mView.setScaleX(value);
-                            mView.setScaleY(value);
-                        }
-                    });
-                    longPressDraging = true;
                     break;
+            }
+        }
+    }
+
+    public void setLimitMap(ArrayMap arrayMap) {
+        Object value = arrayMap.get("TurnLeftSideslip");
+        if (value != null) {
+            if (value instanceof TurnLeftSideslip) {
+                leftSideslip = true;
+                leftAutoClose = ((TurnLeftSideslip) value).autoClose();
+            }
+        }
+        value = arrayMap.get("TurnRightSideslip");
+        if (value != null) {
+            if (value instanceof TurnRightSideslip) {
+                rightSideslip = true;
+            }
+        }
+        value = arrayMap.get("LongTouch");
+        if (value != null) {
+            if (value instanceof LongTouch) {
+                longPress = true;
+            }
+        }
+        value = arrayMap.get("Drag");
+        if (value != null) {
+            if (value instanceof Drag) {
+                drag = true;
+            }
+        }
+        value = arrayMap.get("Drag");
+        if (value != null) {
+            if (value instanceof SWAP) {
+                swap = true;
             }
         }
     }
