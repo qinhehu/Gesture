@@ -8,12 +8,10 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Created by QinHe on 2017/2/21.
+ * Created by QinHe on 2017/2/28.
  */
-
 @Documented
 @Target(FIELD)
 @Retention(RUNTIME)
-public @interface TurnLeftSideslip {
-    boolean autoClose() default false;
+public @interface SWAP {
 }
