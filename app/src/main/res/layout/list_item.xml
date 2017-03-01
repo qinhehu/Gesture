@@ -2,8 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="horizontal">
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+
+        android:layout_marginLeft="-140dp">
+
+        <ImageView
+            android:id="@+id/image_read2"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:background="@color/green_76bd3e"
+            android:scaleType="center"
+            android:src="@drawable/icon_mobi_read" />
+
+        <ImageView
+            android:id="@+id/image_read"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:background="@color/red_f32d3b"
+            android:scaleType="center"
+            android:src="@drawable/icon_mobi_read" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/content_view"
@@ -17,6 +39,7 @@
             android:background="@color/white"
             android:orientation="horizontal"
             android:padding="15dp">
+
 
             <FrameLayout
                 android:layout_width="wrap_content"
@@ -57,5 +80,27 @@
             android:layout_height="1dp"
             android:layout_gravity="bottom"
             android:background="#cccccc" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginRight="-140dp">
+
+        <ImageView
+            android:id="@+id/image_read3"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:background="@color/green_76bd3e"
+            android:scaleType="center"
+            android:src="@drawable/icon_mobi_read" />
+
+        <ImageView
+            android:id="@+id/image_read4"
+            android:layout_width="70dp"
+            android:layout_height="match_parent"
+            android:background="@color/red_f32d3b"
+            android:scaleType="center"
+            android:src="@drawable/icon_mobi_read" />
     </LinearLayout>
 </LinearLayout>
