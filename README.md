@@ -8,7 +8,7 @@
 | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/sideslip.gif) | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/longpressdrag.gif)  |
 
 ## 使用方式
-通过为recyclerview增加annotation即可
+通过为recyclerview增加annotation，实例化GestureEngine，并为其添加事件，就可
 ```java
     @LongTouch
     @Drag
