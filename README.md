@@ -3,7 +3,7 @@ use annotation extend gesture
 
 ## Demo
 
-| sldeslip &autoclose | longpress & drag |
+| sldeslip & autoclose | longpress & drag |
 | ------------ | ------------- |
 | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/sideslip.gif) | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/longpressdrag.gif)  |
 
