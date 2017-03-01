@@ -1,14 +1,13 @@
 # Gesture
-利用annotation集成longpress/drag/sideslip手势
+use annotation extend gesture
 
-## 效果图
+## Demo
 
-| 侧滑样式 | 长按拖动样式 |
+| sldeslip &autoclose | longpress & drag |
 | ------------ | ------------- |
 | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/sideslip.gif) | ![Demo gif](https://github.com/Abeltongtong/Gesture/blob/master/longpressdrag.gif)  |
 
-## 使用方式
-
+## Usage
 ```java
     @LongTouch
     @Drag
