@@ -9,6 +9,9 @@ use annotation extend gesture
 
 ## Usage
 ```java
+
+    compile 'com.qinhe.gesture:gesture:1.0.1'
+    
     @LongTouch
     @Drag
     @TurnRightSideslip(value = {R.id.image_read3, R.id.image_read4})
