@@ -1,9 +1,16 @@
-package com.example.qinhe.gesture.Gesture;
+package com.qinhe.gesturelist;
 
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+
+import com.qinhe.gesturelist.event.IDragListener;
+import com.qinhe.gesturelist.event.IEventListener;
+import com.qinhe.gesturelist.gesture.Drag;
+import com.qinhe.gesturelist.gesture.LongTouch;
+import com.qinhe.gesturelist.gesture.TurnLeftSideslip;
+import com.qinhe.gesturelist.gesture.TurnRightSideslip;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -39,7 +46,6 @@ public class GestureEngine {
             Annotation[] annotations = field.getAnnotations();
             for (Annotation annotation : annotations) {
                 if (annotation instanceof TurnLeftSideslip) {
-                    Log.d("annotation", "GestureEngine: " + ((TurnLeftSideslip) annotation).autoClose());
                     map.put("TurnLeftSideslip", annotation);
                 } else if (annotation instanceof TurnRightSideslip) {
                     map.put("TurnRightSideslip", annotation);

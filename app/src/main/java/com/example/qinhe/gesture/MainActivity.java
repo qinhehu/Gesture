@@ -5,23 +5,23 @@ import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.example.qinhe.gesture.Gesture.Drag;
-import com.example.qinhe.gesture.Gesture.GestureEngine;
-import com.example.qinhe.gesture.Gesture.IDragListener;
-import com.example.qinhe.gesture.Gesture.IEventListener;
-import com.example.qinhe.gesture.Gesture.LongTouch;
-import com.example.qinhe.gesture.Gesture.TurnLeftSideslip;
-import com.example.qinhe.gesture.Gesture.TurnRightSideslip;
+import com.qinhe.gesturelist.gesture.Drag;
+import com.qinhe.gesturelist.GestureEngine;
+import com.qinhe.gesturelist.event.IDragListener;
+import com.qinhe.gesturelist.event.IEventListener;
+import com.qinhe.gesturelist.gesture.LongTouch;
+import com.qinhe.gesturelist.gesture.TurnLeftSideslip;
+import com.qinhe.gesturelist.gesture.TurnRightSideslip;
+
 
 public class MainActivity extends AppCompatActivity {
 
     @LongTouch
     @Drag
     @TurnRightSideslip(value = {R.id.image_read3, R.id.image_read4})
-    @TurnLeftSideslip(autoClose = true, value = {R.id.image_read, R.id.image_read2})
+    @TurnLeftSideslip(autoClose = true, value = {R.id.image_read})
     RecyclerView list;
 
     ListAdapter adapter;

@@ -1,4 +1,4 @@
-package com.example.qinhe.gesture.Gesture;
+package com.qinhe.gesturelist.gesture;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

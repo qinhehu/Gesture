@@ -1,6 +1,4 @@
-package com.example.qinhe.gesture.Gesture;
-
-import android.support.annotation.IdRes;
+package com.qinhe.gesturelist.gesture;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -16,6 +14,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(FIELD)
 @Retention(RUNTIME)
-public @interface TurnRightSideslip {
-    @IdRes int[] value();
+public @interface PullUp {
 }

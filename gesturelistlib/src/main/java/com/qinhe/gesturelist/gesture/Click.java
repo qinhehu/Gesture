@@ -1,4 +1,4 @@
-package com.example.qinhe.gesture.Gesture;
+package com.qinhe.gesturelist.gesture;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -14,5 +14,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(FIELD)
 @Retention(RUNTIME)
-public @interface PullUp {
+public @interface Click {
 }

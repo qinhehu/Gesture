@@ -1,4 +1,4 @@
-package com.example.qinhe.gesture.Gesture;
+package com.qinhe.gesturelist.event;
 
 /**
  * Created by QinHe on 2017/3/1.

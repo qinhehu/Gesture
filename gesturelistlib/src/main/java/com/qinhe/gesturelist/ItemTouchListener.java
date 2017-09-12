@@ -1,11 +1,9 @@
-package com.example.qinhe.gesture.Gesture;
+package com.qinhe.gesturelist;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.view.ViewCompat;
@@ -13,7 +11,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -21,11 +18,16 @@ import android.view.ViewConfiguration;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Scroller;
 
-import com.example.qinhe.gesture.DisplayUtils;
-import com.example.qinhe.gesture.R;
+
+import com.qinhe.gesture.R;
+import com.qinhe.gesturelist.event.IDragListener;
+import com.qinhe.gesturelist.event.IEventListener;
+import com.qinhe.gesturelist.gesture.Drag;
+import com.qinhe.gesturelist.gesture.LongTouch;
+import com.qinhe.gesturelist.gesture.TurnLeftSideslip;
+import com.qinhe.gesturelist.gesture.TurnRightSideslip;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -86,8 +88,6 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
 
     @NonNull
     private Scroller mScroller;
-    @NonNull
-    private DisplayUtils displayUtils;
 
     public ItemTouchListener(RecyclerView recyclerView) {
         ViewConfiguration configuration = ViewConfiguration.get(recyclerView.getContext());
@@ -98,7 +98,6 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
 
         mHandler = new GestureHandler();
         isScrolling = false;
-        displayUtils = new DisplayUtils(recyclerView.getContext());
         mScroller = new Scroller(recyclerView.getContext(), new AccelerateDecelerateInterpolator());
         mRecyclerView = recyclerView;
 
@@ -324,25 +323,25 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
                 if (!isScrolling && isOnceEventFlow) {
 
                     //手指向左移动，view左移动，触发右边事件
-                    if (mDownFocusX - x > 0 && Math.abs(x - mDownFocusX) <= displayUtils.dip2px(rightMarginWidth)
-                            && mView.getScrollX() != displayUtils.dip2px(rightMarginWidth) && rightSideslip) {
+                    if (mDownFocusX - x > 0 && Math.abs(x - mDownFocusX) <= (rightMarginWidth)
+                            && mView.getScrollX() != (rightMarginWidth) && rightSideslip) {
                         mView.scrollTo((int) (mDownFocusX - x), 0);
                         mCurrentX = (int) (mDownFocusX - x);
                     }
                     //手指向右移动，view右移动，触发左边事件
-                    if (mDownFocusX - x < -displayUtils.dip2px(leftMarginWidth) / 2 &&
-                            (mCurrentX == 0 || mCurrentX == displayUtils.dip2px(leftMarginWidth)) && leftSideslip && leftAutoClose) {
-                        if (mCurrentX == displayUtils.dip2px(leftMarginWidth)) {
+                    if (mDownFocusX - x < -(leftMarginWidth) / 2 &&
+                            (mCurrentX == 0 || mCurrentX == leftMarginWidth) && leftSideslip && leftAutoClose) {
+                        if (mCurrentX == (leftMarginWidth)) {
 //                            ViewCompat.setTranslationZ(rightBtn, -1f);
                         }
-                        mScroller.startScroll(mCurrentX, 0, -displayUtils.dip2px(leftMarginWidth), 0);
-                        mCurrentX += -displayUtils.dip2px(leftMarginWidth);
+                        mScroller.startScroll(mCurrentX, 0, -(int) leftMarginWidth, 0);
+                        mCurrentX += -(int) leftMarginWidth;
                         mHandler.sendEmptyMessage(SIDESLIP);
                     }
                     if (x - mDownFocusX > 0 &&
-                            Math.abs(x - mDownFocusX) <= displayUtils.dip2px(leftMarginWidth)
-                            && mView.getScrollX() != 0 - displayUtils.dip2px(leftMarginWidth) && leftSideslip && !leftAutoClose) {
-                        if (mCurrentX == displayUtils.dip2px(leftMarginWidth)) {
+                            Math.abs(x - mDownFocusX) <= (leftMarginWidth)
+                            && mView.getScrollX() != 0 - (leftMarginWidth) && leftSideslip && !leftAutoClose) {
+                        if (mCurrentX == (leftMarginWidth)) {
 //                            ViewCompat.setTranslationZ(rightBtn, -1f);
                         }
                         mView.scrollTo((int) (mDownFocusX - x), 0);
@@ -366,10 +365,10 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
                     if (velocityX < -1000 || velocityX > 1000) {
                         int width = 0;
                         if (velocityX < 0 && rightSideslip) {
-                            width = displayUtils.dip2px(rightMarginWidth);
+                            width = (int)(rightMarginWidth);
                         } else {
                             if (velocityX > 0 && leftSideslip) {
-                                width = -displayUtils.dip2px(leftMarginWidth);
+                                width = -(int)(leftMarginWidth);
                             }
                         }
                         mScroller.startScroll(mView.getScrollX(), 0
@@ -415,8 +414,8 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
     //只有移动超过offset过后，才认为是个侧滑动作，进行事件拦截。
     private Boolean isSideslipMove(float x, float y) {
         if (
-                Math.abs(mDownFocusY - y) <= displayUtils.dip2px(VERTICAL_MOVE_OFFSET) &&
-                        Math.abs(mDownFocusX - x) >= displayUtils.dip2px(HORIZONTAL_MOVE_OFFSET)) {
+                Math.abs(mDownFocusY - y) <= (VERTICAL_MOVE_OFFSET) &&
+                        Math.abs(mDownFocusX - x) >= (HORIZONTAL_MOVE_OFFSET)) {
             return true;
         }
         return false;
@@ -497,8 +496,8 @@ public class ItemTouchListener implements RecyclerView.OnItemTouchListener {
                         mHandler.sendEmptyMessage(SIDESLIP);
                     } else {
                         if (leftAutoClose) {
-                            if (mCurrentX == -displayUtils.dip2px(leftMarginWidth)) {
-                                mScroller.startScroll(mCurrentX, 0, displayUtils.dip2px(leftMarginWidth), 0);
+                            if (mCurrentX == -(int)leftMarginWidth) {
+                                mScroller.startScroll(mCurrentX, 0, (int)leftMarginWidth, 0);
                                 mHandler.sendEmptyMessage(SIDESLIP);
                                 mCurrentX = 0;
                                 isOnceEventFlow = false;
